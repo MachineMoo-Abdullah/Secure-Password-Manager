@@ -155,8 +155,60 @@ dmypy.json
 cython_debug/
 
 # PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
+from cryptography.fernet import Fernet
+
+# Function to generate and save a key
+def write_key():
+    key = Fernet.generate_key()
+    with open("Key.key", "wb") as key_file:
+        key_file.write(key)
+
+# Generate a new key if it doesn't exist
+try:
+    with open("Key.key", "rb") as key_file:
+        key = key_file.read()
+except FileNotFoundError:
+    write_key()
+    with open("Key.key", "rb") as key_file:
+        key = key_file.read()
+
+# Initialize Fernet with the key
+fer = Fernet(key)
+
+# Function to view saved passwords
+def view():
+    try:
+        with open("password.txt", "r") as f:
+            for line in f.readlines():
+                data = line.rstrip()
+                user, passw = data.split("|")
+                try:
+                    decrypted_passw = fer.decrypt(passw.encode()).decode()
+                    print(f"Username: {user}\nPassword: {decrypted_passw}")
+                except Exception as e:
+                    print(f"Failed to decrypt password for user {user}: {e}")
+    except FileNotFoundError:
+        print("No passwords found. Please add some first.")
+
+# Function to add a new username and password
+def add():
+    username = input("Please enter username: ")
+    password = input("Please enter new password: ")
+    encrypted_password = fer.encrypt(password.encode()).decode()
+
+    with open("password.txt", "a") as f:
+        f.write(f"{username}|{encrypted_password}\n")
+    print("Password added successfully.")
+
+while True:
+    inp = input(
+        "Would you like to add a new password or view existing ones (view/add)? Press 'q' to quit: ").lower()
+    if inp == "q":
+        break
+    elif inp == "view":
+        view()
+    elif inp == "add":
+        add()
+    else:
+        print("Invalid input. Please enter 'view', 'add', or 'q'.")
 #.idea/
